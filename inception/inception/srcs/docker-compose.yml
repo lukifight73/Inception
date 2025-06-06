@@ -1,0 +1,94 @@
+# Specify the version of the Docker Compose file format to use.
+version: "3.8"
+
+# the services part
+services:
+#mariadb
+  mariadb:
+    # Specifies the Docker image to use for this service. Here, mariadb:user it indicates a custom MariaDB image.
+    image: mariadb:user
+    container_name: mariadb
+    # It points to the directory ./mariadb containing the Dockerfile to build the image. 
+    build: ./requirements/mariadb
+    volumes:
+    # Mounts the mariadb named volume to /var/lib/mysql inside the container, ensuring that MariaDB data persists across container restarts.
+      - mariadb:/var/lib/mysql
+    env_file :
+      - .env
+    networks :
+    # Connects the container to the custom network(inception), allowing it to communicate with other containers on the same network.
+      - inception
+    restart: always
+    # it ensures that the MariaDB service is accessible by checking if the container is listening on port 3306.
+    # If it passes, the container is considered "healthy", If not, after 10 retries the container will be marked as "unhealthy".
+    healthcheck:
+    # CMD: This specifies the command to run inside the container for the health check.
+    # nc (netcat): This is a utility used for networking. In this case, it’s used to check if a particular port is open and listening.
+    # -z: Performs a “zero I/O mode” scan, essentially asking if the port is open without sending any actual data.
+    # -v: Provides verbose output, which shows the connection attempts and results.
+    # mariadb: The hostname of the MariaDB service.
+    # 3306: The port number for MariaDB. This checks if the MariaDB service is up and listening on port 3306.
+      test: ["CMD", "nc", "-zv", "mariadb", "3306"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+#nginx
+  nginx:
+    image: nginx:user
+    container_name: nginx
+    build: ./requirements/nginx
+    ports:
+      - "8443:443"
+    # Ensures that the wordpress service starts before Nginx, establishing necessary dependencies.
+    depends_on:
+      - wordpress
+    volumes:
+    # Mounts the wordpress named volume to (/var/www/wordpress) inside the Nginx container
+      - wordpress:/var/www/html
+    networks:
+    # networks: Connects to the inception network for inter-container communication.
+      - inception
+    restart: always
+#wordpress
+  wordpress:
+    image: wordpress:user
+    container_name: wordpress
+    build: ./requirements/wordpress
+    depends_on:
+    # Ensures that the MariaDB service starts before WordPress, as WordPress needs the database to be available.
+      mariadb:
+        condition: service_healthy
+    volumes:
+      - wordpress:/var/www/html
+    env_file :
+      - .env
+    networks:
+      - inception
+    restart: always
+
+# the volumes part
+volumes:
+  mariadb:
+  # This names the volume (mariadb), which can be referenced in the services section.
+    name: mariadb
+    # The (local) driver is the default driver that manages volumes on the local machine.
+    driver: local
+    driver_opts:
+      # Specifies the host directory /home/data/mariadb where the volume's data will be stored.
+      device: /data/mariadb
+      o : bind # Bind mounts allow you to map a directory on the host machine directly to a directory in the container.
+      type : none # Set to (none), indicating that no special filesystem type is specified. This is standard for bind mounts.
+  wordpress:
+    name: wordpress
+    driver: local
+    driver_opts:
+      device: /data/wordpress
+      o : bind
+      type : none
+
+# the networks part
+# Defines a custom network named (inception), which all the services connect to.
+# This network facilitates communication between the MariaDB, Nginx, and WordPress containers.
+networks:
+  inception:
+    name: inception

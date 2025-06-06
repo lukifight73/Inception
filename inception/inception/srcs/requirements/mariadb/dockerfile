@@ -1,0 +1,22 @@
+
+FROM debian:bullseye
+
+# update and upgrade the system
+RUN apt-get update && apt-get upgrade -y
+
+# install the required packages -> it use the command apt-get install -y (repondre tout oui) mariadb-server dans le container  // 
+# netcat permet de savoir que mariaDB est dispo avant de lancer l'installation de wordpress, a lier avec aach de wordpress i guess
+RUN apt-get install -y mariadb-server netcat
+
+# copy file from host to container
+# This line copies a file from the host machine into the Docker image. 
+# It copies the file mdb-conf.sh located in the ./ directory relative to the Dockerfile on the host machine to the root directory / inside the Docker image.
+COPY ./tools/mdb-conf.sh /mdb-conf.sh
+COPY ./conf/my.cnf /etc/mysql/my.cnf
+
+
+# set permissions to the file juste copied
+RUN chmod +x /mdb-conf.sh
+
+# define entrypoint command to run when the container starts
+ENTRYPOINT ["./mdb-conf.sh"]

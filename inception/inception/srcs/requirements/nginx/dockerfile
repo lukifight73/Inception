@@ -1,0 +1,35 @@
+FROM debian:bullseye
+
+# update and upgrade the system
+RUN apt-get update && apt-get upgrade -y
+
+# # install the required packages
+# OpenSSL fournit les fondamentaux de la sécurité numérique sur les systèmes Unix/Linux.
+RUN apt-get install -y nginx openssl
+
+# create the ssl directory where SSL certificates will be stored. The -p flag ensures that no error is raised if the directory already exists.
+RUN mkdir -p /etc/nginx/ssl
+
+# generate the ssl certificate
+# un certificat autosigné est un certificat de clé publique qu'un utilisateur émet en son propre nom
+#  par opposition à un certificat émis par une autorité de certification. Un tel certificat est facile à produire et ne coûte rien. 
+# Cependant, il ne fournit aucune valeur de confiance. 
+RUN openssl req -x509 -nodes -out /etc/nginx/ssl/inception.crt -keyout \
+    /etc/nginx/ssl/inception.key -subj "/C=FR/L=Paris/O=42/OU=42/CN=domain_name.fr/UID=admin_name"
+
+# copy the nginx configuration file
+COPY ./tools/nginx.conf /etc/nginx/nginx.conf
+COPY ./conf/default.conf /etc/nginx/conf.d/default.conf
+
+# create the wordpress directory
+RUN mkdir -p /var/www/wordpress
+
+# change the owner of the wordpress directory to www-data which is the default user and group for NGINX
+# The -R flag applies the ownership change recursively to all files and subdirectories.
+RUN chown -R www-data:www-data /var/www/wordpress
+
+# define the command to run when the container starts
+# nginx: Starts the NGINX server.
+# -g "daemon off;": Ensures that NGINX runs in the foreground, which is necessary for the Docker container to stay alive. 
+# If NGINX were to run in the background (daemon mode), the Docker container would exit immediately after NGINX starts.
+CMD ["nginx", "-g", "daemon off;"]

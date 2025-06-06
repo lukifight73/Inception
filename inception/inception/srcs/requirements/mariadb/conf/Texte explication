@@ -1,0 +1,10 @@
+Pour configurer le serveur MySQL
+[mysqld]
+user            = mysql
+port            = 3306
+bind-address    = 0.0.0.0 -> écoute sur toutes les interfaces réseau
+datadir         = /var/lib/mysql 
+skip-name-resolve -> évite la résolution DNS des clients, améliore les performances.
+sql_mode        = NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES -> empêche l’utilisation implicite de moteurs de remplacement, renforce la cohérence des transactions
+max_connections = 100 -> limite à 100 connexions simultanées.
+innodb_file_per_table = 1 -> chaque table InnoDB utilise un fichier séparé, facilite la gestion de l’espace disque.
