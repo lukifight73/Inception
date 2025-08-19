@@ -8,12 +8,12 @@ services:
     # Specifies the Docker image to use for this service. Here, mariadb:user it indicates a custom MariaDB image.
     image: mariadb:user
     container_name: mariadb
-    # It points to the directory ./mariadb containing the Dockerfile to build the image. 
+    # It points to the directory ./mariadb containing the Dockerfile to build the image.
     build: ./requirements/mariadb
     volumes:
     # Mounts the mariadb named volume to /var/lib/mysql inside the container, ensuring that MariaDB data persists across container restarts.
       - mariadb:/var/lib/mysql
-    env_file :
+    env_file : # prend info depuis .env
       - .env
     networks :
     # Connects the container to the custom network(inception), allowing it to communicate with other containers on the same network.
@@ -38,13 +38,13 @@ services:
     container_name: nginx
     build: ./requirements/nginx
     ports:
-      - "8443:443"
-    # Ensures that the wordpress service starts before Nginx, establishing necessary dependencies.
+      - "8443:443" # Ensures that the wordpress service starts before Nginx, establishing necessary dependencies.
+      - "443:443" # permet d'acceder aussi sur port 443 standard
     depends_on:
       - wordpress
     volumes:
     # Mounts the wordpress named volume to (/var/www/wordpress) inside the Nginx container
-      - wordpress:/var/www/html
+      - wordpress:/var/www/wordpress
     networks:
     # networks: Connects to the inception network for inter-container communication.
       - inception
@@ -59,7 +59,7 @@ services:
       mariadb:
         condition: service_healthy
     volumes:
-      - wordpress:/var/www/html
+      - wordpress:/var/www/wordpress
     env_file :
       - .env
     networks:
@@ -69,22 +69,37 @@ services:
 # the volumes part
 volumes:
   mariadb:
-  # This names the volume (mariadb), which can be referenced in the services section.
-    name: mariadb
-    # The (local) driver is the default driver that manages volumes on the local machine.
     driver: local
     driver_opts:
-      # Specifies the host directory /home/data/mariadb where the volume's data will be stored.
-      device: /data/mariadb
-      o : bind # Bind mounts allow you to map a directory on the host machine directly to a directory in the container.
-      type : none # Set to (none), indicating that no special filesystem type is specified. This is standard for bind mounts.
+      type: none
+      device: /home/lbenatar/data/mariadb
+      o: bind
   wordpress:
-    name: wordpress
     driver: local
     driver_opts:
-      device: /data/wordpress
-      o : bind
-      type : none
+      type: none
+      device: /home/lbenatar/data/wordpress
+      o: bind
+
+# the volumes part
+# volumes:
+#   mariadb:
+#   # This names the volume (mariadb), which can be referenced in the services section.
+#     name: mariadb
+#     # The (local) driver is the default driver that manages volumes on the local machine.
+#     driver: local
+#     driver_opts:
+#       # Specifies the host directory /home/data/mariadb where the volume's data will be stored.
+#       device: /home/lbenatar/data/mariadb
+#       o : bind # Bind mounts allow you to map a directory on the host machine directly to a directory in the container.
+#       type : none # Set to (none), indicating that no special filesystem type is specified. This is standard for bind mounts.
+#   wordpress:
+#     name: wordpress
+#     driver: local
+#     driver_opts:
+#       device: /home/lbenatar/data/wordpress
+#       o : bind
+#       type : none
 
 # the networks part
 # Defines a custom network named (inception), which all the services connect to.

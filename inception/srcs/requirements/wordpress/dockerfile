@@ -6,9 +6,7 @@ RUN apt-get update && apt-get upgrade -y
 # install the required packages
 # It includes curl for making HTTP requests, php and php7.4-fpm for running PHP scripts
 # php-mysql for MySQL support in PHP, and mariadb-client for interacting with the MariaDB database.
-RUN apt-get install -y curl php php7.4-fpm php-mysql mariadb-client
-
-RUN apt-get install -y netcat
+RUN apt-get install -y curl php php7.4-fpm php-mysql mariadb-client netcat
 
 # copy the wordpress configuration script to the root directory in the container
 COPY ./tools/wp_conf.sh /
