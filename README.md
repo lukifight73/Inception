@@ -25,7 +25,7 @@ Part of 42 Common Core.
 # Installation and compilation
 1. Clone this repository into your virtual machine:
 ```bash
-git clone git@github.com:lukifight73/Philosophers-42.git
+git clone git@github.com:lukifight73/Inception.git
 ```
 2. Run the following command to build and start the containers:
 ```bash
